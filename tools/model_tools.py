@@ -21,6 +21,7 @@ def model_weight_download():
         if not os.path.exists(MODEL_FOLDER):
             os.makedirs(MODEL_FOLDER)
         gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
+        gdown.download(INCEPTION_BN_URL, INCEPTION_BN_PATH, quiet=False)
 
 
 def model_init():
@@ -40,12 +41,11 @@ def model_init():
             "gamma": 0.5,
         }
 
-        model = Classification_Trainer.load_from_checkpoint(checkpoint_path=MODEL_PATH,
-                                                            hparams=hparam,
-                                                            scheduler_params=scheduler_param,
-                                                            nb_classes=1,
-                                                            pretrained_classes=10177
-                                                            )
+        model = Classification_Trainer(hparams=hparam,
+                                       scheduler_params=scheduler_param,
+                                       nb_classes=1
+                                       )
+        model = model.load_from_checkpoint(checkpoint_path=MODEL_PATH)
 
     return model
 

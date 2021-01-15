@@ -10,6 +10,7 @@ from tools.model_tools import *
 
 
 def base64arr_to_tensor(frames):
+    model = model_init()
     face_detector = MTCNN()
     face_detector.select_largest = True
     tensor_arr = []
@@ -20,21 +21,21 @@ def base64arr_to_tensor(frames):
         img = Image.open(buf).convert('RGB')
         img = np.array(img)
         # extract face
-        detections, probs, landmarks = face_detector.detect(img)
+        detections, probs = face_detector.detect(img)
         if detections is not None:
             x, y, x2, y2 = int(detections[0][0]), int(detections[0][1]), int(detections[0][2]), int(detections[0][3])
-            img = Image.fromarray(cv2.cvtColor(img[y:y2, x:x2, :], cv2.COLOR_BGR2RGB))
+            img = Image.fromarray(img[y:y2, x:x2, :])
         # resize face
-        img = resize(img, 256)
+        img = resize(img, model.input_size)
         # save sample
         img.save("last_image.jpg")
 
         transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize((256, 256))
+            transforms.Resize((model.input_size, model.input_size))
         ])
         tensor_arr.append(transform(img))
-    return torch.cat(tensor_arr)
+    return torch.stack(tensor_arr)
 
 
 def resize(img, input_size):
@@ -45,13 +46,14 @@ def resize(img, input_size):
     new_im = Image.new("RGB", (input_size, input_size))
     new_im.paste(img, ((input_size - new_size[0]) // 2,
                        (input_size - new_size[1]) // 2))
-    return img
+    return new_im
 
 
 def check_liveness(tensor):
     model = model_init()
-    y_hat = model.infer(tensor).toList()
+    y_hat = model.infer(tensor)
     for elem in y_hat:
-        if int(elem) == 1:
+        print(elem.item())
+        if elem.item() >= 0.97:
             return True
     return False
