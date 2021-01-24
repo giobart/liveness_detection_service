@@ -7,6 +7,7 @@ import numpy as np
 from torchvision import transforms
 import torch
 from tools.model_tools import *
+from config import *
 
 
 def base64arr_to_tensor(frames):
@@ -52,8 +53,11 @@ def resize(img, input_size):
 def check_liveness(tensor):
     model = model_init()
     y_hat = model.infer(tensor)
+    open_eye = False
     for elem in y_hat:
         print(elem.item())
-        if elem.item() >= 0.97:
+        if elem.item() < EYE_TRESHOLD:
+            open_eye = True
+        if elem.item() >= EYE_TRESHOLD and open_eye is True:
             return True
     return False
